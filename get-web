@@ -31,7 +31,7 @@ fi
 
 HTMLPAGE_DATA="${DATA_DIR}/html"
 if [ ! -z "${SITE_TAG}" ] ; then
-	HTMLPAGE_DATA="${HTMLPAGE_DATA}_${SITE_TAG}"
+	HTMLPAGE_DATA="${HTMLPAGE_DATA}/${SITE_TAG}"
 fi
 HTMLPAGE_DATA="${HTMLPAGE_DATA}-"
 
@@ -56,6 +56,11 @@ if [[ "${SITESTEP}" -eq 0 ]] ; then
 	fi
 	cd "./mirror_${SITE_TAG}"
 
+	if [ ! -d "./warc" ] ; then
+		mkdir ./warc
+	fi
+	mv *.warc *.warc.gz ./warc
+
 	INCLUDE_SWITCH=""
 	EXCLUDE_SWITCH="--no-parent"
 	if [[ "${SITE_TAG}" == "bar" ]] ; then
@@ -79,7 +84,7 @@ if [[ "${SITESTEP}" -eq 0 ]] ; then
 	mkdir --verbose "${HTMLPAGE_DATA}${DATESTAMP}.mirror"
 	cd "${HTMLPAGE_DATA}${DATESTAMP}.mirror"
 
-	rsync --archive --itemize-changes "${DATA_DIR}/mirror_${SITE_TAG}/" ./
+	rsync --archive --itemize-changes --exclude=warc "${DATA_DIR}/mirror_${SITE_TAG}/" ./
 
 fi
 

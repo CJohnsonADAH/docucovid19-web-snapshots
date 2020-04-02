@@ -13,6 +13,8 @@ if [[ ! -d "${DATA_DIR}" ]] ; then
 fi
 cd "${DATA_DIR}"
 
+DATAONLY=0
+WEBONLY=0
 if [ ! -z "$1" ] ; then
 	if [ "$1" == "--sync" ] ; then
 		echo "=== Sync: Preparing for Transmit ==="
@@ -20,63 +22,59 @@ if [ ! -z "$1" ] ; then
 		echo "... transmitting via rsync ..."
 		rsync --archive --itemize-changes --progress --exclude="mirror_*" --exclude="${DATA_SERVER}" ./ ${DATA_SERVER}:${DATA_SLUG}/
 		exit
+	elif [ "$1" == "--data" ] ; then
+		DATAONLY=1
+		shift
+	elif [ "$1" == "--web" ] ; then
+		WEBONLY=1
+		shift
 	fi
 fi
 
-STEP_FILE="${DATA_DIR}/snapshot-step.txt"
-if [ -r "${STEP_FILE}" ] ; then
-	STEP=$( cat "${DATA_DIR}/snapshot-step.txt" )
-else
-	STEP=3
+if [[ ! "${DATAONLY}" ]] ; then
+	STEP_FILE="${DATA_DIR}/snapshot-step.txt"
+	STEP_PERIOD=4
+
+	if [ -r "${STEP_FILE}" ] ; then
+		STEP=$( cat "${DATA_DIR}/snapshot-step.txt" )
+	else
+		STEP=3
+	fi
+	STEP=$(( (STEP + 1) % STEP_PERIOD ))
+	printf "%d\n" "${STEP}" > "${STEP_FILE}"
+
+	printf "*** Step %d of %d ...\n" "${STEP}" "${STEP_PERIOD}"
+
 fi
-STEP=$(( (STEP + 1) % 4 ))
-printf "%d\n" "${STEP}" > "${STEP_FILE}"
 
 DATESTAMP=$( TZ="UTC" date +"%Y%m%d%H%M%SZ" )
+
+if [[ "${WEBONLY}" -eq 0 ]] ; then
+
+	printf "*** Getting data ...\n"
 
 DATA_PATH='https://services7.arcgis.com/4RQmZZ0yaZkGR1zy/arcgis/rest/services/COV19_Public_Dashboard_ReadOnly/FeatureServer/0/query'
 DATA_PARAMS='where=1%3D1&outFields=CNTYNAME%2CCNTYFIPS%2CCONFIRMED%2CDIED%2Creported_death&returnGeometry=false'
 DATA_URL="${DATA_PATH}?f=json&${DATA_PARAMS}"
 
-DATA_TAG="confirmeddiedreported"
-DATA_PREFIX="${DATA_DIR}/data_${DATA_TAG}-"
-
-URL_OUT="${DATA_PREFIX}${DATESTAMP}.url.txt"
-DATA_OUT="${DATA_PREFIX}${DATESTAMP}.json"
-WARC_OUT="${DATA_PREFIX}${DATESTAMP}"
-
-echo "${DATA_URL}" > "${URL_OUT}"
-wget --output-document="${DATA_OUT}" --warc-file="${WARC_OUT}" "${DATA_URL}"
-echo "Completed ${DATA_TAG} data dump: " $( date )
+get-data "${DATA_URL}" "confirmeddiedreported" "${DATESTAMP}" "${DATA_DIR}"
 
 DATA_PATH='https://services7.arcgis.com/4RQmZZ0yaZkGR1zy/arcgis/rest/services/COV19_Public_Dashboard_ReadOnly/FeatureServer/0/query'
 DATA_PARAMS='returnGeometry=false&spatialRel=esriSpatialRelIntersects&outFields=*&outSR=102100&resultOffset=0&resultRecordCount=69&cacheHint=true&where=CONFIRMED%20%3E=%200'
 
 DATA_URL="${DATA_PATH}?f=json&${DATA_PARAMS}"
 
-DATA_PREFIX="${DATA_DIR}/capture-"
-
-URL_OUT="${DATA_PREFIX}${DATESTAMP}.url.txt"
-DATA_OUT="${DATA_PREFIX}${DATESTAMP}.json"
-HEAD_OUT="${DATA_PREFIX}${DATESTAMP}.head"
-
-echo "${DATA_URL}" > "${URL_OUT}"
-curl --dump-header "${HEAD_OUT}" --output "${DATA_OUT}" "${DATA_URL}"
-echo "Completed data dump: " $( date )
-
-TESTSITES_DATA="${DATA_DIR}/testsites-"
-
-URL_OUT="${TESTSITES_DATA}${DATESTAMP}.url.txt"
-DATA_OUT="${TESTSITES_DATA}${DATESTAMP}.json"
-HEAD_OUT="${TESTSITES_DATA}${DATESTAMP}.head"
+get-data "${DATA_URL}" "confirmeddied" "${DATESTAMP}" "${DATA_DIR}"
 
 DATA_PATH="https://services7.arcgis.com/4RQmZZ0yaZkGR1zy/arcgis/rest/services/COVID19_testsites_READ_ONLY/FeatureServer/0/query"
 DATA_PARAMS='where=1%3D1&returnGeometry=true&spatialRel=esriSpatialRelIntersects&outFields=*&maxRecordCountFactor=4&outSR=102100&resultOffset=0&resultRecordCount=8000&cacheHint=true&quantizationParameters=%7B%22mode%22%3A%22view%22%2C%22originPosition%22%3A%22upperLeft%22%2C%22tolerance%22%3A1.0583333333333338%2C%22extent%22%3A%7B%22xmin%22%3A-9821126.399120873%2C%22ymin%22%3A3483922.583299004%2C%22xmax%22%3A-9478628.407981059%2C%22ymax%22%3A4616413.594372874%2C%22spatialReference%22%3A%7B%22wkid%22%3A102100%2C%22latestWkid%22%3A3857%7D%7D%7D'
 DATA_URL="${DATA_PATH}?f=json&${DATA_PARAMS}"
 
-echo "${DATA_URL}" > "${URL_OUT}"
-curl --dump-header "${HEAD_OUT}" --output "${DATA_OUT}" "${DATA_URL}"
-echo "Completed test sites dump: " $( date )
+get-data "${DATA_URL}" "testsites" "${DATESTAMP}" "${DATA_DIR}"
+
+fi
+
+if [[ "${DATAONLY}" -eq 0 ]] ; then
 
 wget --mirror 'http://${DATA_SERVER}/sources.tsv.txt'
 while IFS="" read LINE; do
@@ -90,6 +88,8 @@ while IFS="" read LINE; do
 done < "${DATA_DIR}/${DATA_SERVER}/sources.tsv.txt"
 
 echo "Completed web snapshots: " $( date )
+
+fi
 
 cd "${DATA_DIR}"
 find -name '*.warc' -exec gzip \{\} \;
