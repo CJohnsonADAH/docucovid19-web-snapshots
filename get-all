@@ -18,7 +18,7 @@ if [ ! -z "$1" ] ; then
 		echo "=== Sync: Preparing for Transmit ==="
 		find -name '*.warc' -exec gzip \{\} \;
 		echo "... transmitting via rsync ..."
-		rsync --archive --itemize-changes --progress --exclude="mirror_*" --exclude="${DATA_SERVER}" ./ finarfin.radgeek.net:${DATA_SLUG}/
+		rsync --archive --itemize-changes --progress --exclude="mirror_*" --exclude="${DATA_SERVER}" ./ ${DATA_SERVER}:${DATA_SLUG}/
 		exit
 	fi
 fi
