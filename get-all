@@ -92,7 +92,7 @@ echo "Completed web snapshots: " $( date )
 fi
 
 cd "${DATA_DIR}"
-find -name '*.warc' -exec gzip \{\} \;
+find -name '*.warc' -not -path '*/html/snapshots/*' -exec gzip \{\} \;
 
 exit
 

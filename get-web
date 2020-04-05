@@ -39,6 +39,8 @@ if [ ! -z "${SITE_TAG}" ] ; then
 fi
 HTMLPAGE_DATA="${HTMLPAGE_DATA}-"
 
+# fetch the basic HTML
+
 URL_OUT="${HTMLPAGE_DATA}${DATESTAMP}.url.txt"
 DATA_OUT="${HTMLPAGE_DATA}${DATESTAMP}.html"
 HEAD_OUT="${HTMLPAGE_DATA}${DATESTAMP}.head"
@@ -52,17 +54,18 @@ fi
 echo "${DATA_URL}" > "${URL_OUT}"
 wget ${CERT_SWITCH} --output-document="${DATA_OUT}" --warc-file="${WARC_OUT}" "${DATA_URL}"
 
+# mirror the site
+WG_WARC=""
 if [[ "${SITESTEP}" -eq 0 ]] ; then
 	WG_WARC="--warc-file=${SITE_TAG}-${DATESTAMP}"
-else
-	WG_WARC=""
 fi
 
 	cd "${DATA_DIR}"
-	if [ ! -d "./mirror_${SITE_TAG}" ] ; then
-		mkdir --verbose "./mirror_${SITE_TAG}"
+	MIRROR_DIR="${DATA_DIR}/mirror_${SITE_TAG}"
+	if [ ! -d "${MIRROR_DIR}" ] ; then
+		mkdir --verbose "${MIRROR_DIR}"
 	fi
-	cd "./mirror_${SITE_TAG}"
+	cd "${MIRROR_DIR}"
 
 	if [ ! -d "./warc" ] ; then
 		mkdir ./warc
@@ -88,7 +91,7 @@ fi
 		WG_LEVEL=""
 		WG_TIMESTAMPING=""
 	fi
-	echo '$' wget ${CERT_SWITCH} ${WG_RECURSE} ${WG_LEVEL} ${WG_TIMESTAMPING} --convert-links --adjust-extension ${INCLUDE_SWITCH} ${EXCLUDE_SWITCH} --page-requisites --backup-converted --warc-file="${SITE_TAG}-${DATESTAMP}" "${DATA_URL}"
+	echo '$' wget ${CERT_SWITCH} ${WG_RECURSE} ${WG_LEVEL} ${WG_TIMESTAMPING} --convert-links --adjust-extension ${INCLUDE_SWITCH} ${EXCLUDE_SWITCH} --page-requisites --backup-converted ${WG_WARC} "${DATA_URL}"
 
 	wget ${CERT_SWITCH} ${WG_RECURSE} ${WG_LEVEL} ${WG_TIMESTAMPING} --convert-links --adjust-extension ${INCLUDE_SWITCH} ${EXCLUDE_SWITCH} --page-requisites --backup-converted ${WG_WARC} "${DATA_URL}"
 
@@ -100,8 +103,11 @@ fi
 		mkdir --parents "${SNAPSHOTDIR}"
 	fi
 
-	echo '$' make-snapshot.pl "${DATA_DIR}/mirror_${SITE_TAG}/" "${SNAPSHOTDIR}"
-	make-snapshot.pl "${DATA_DIR}/mirror_${SITE_TAG}/" "${SNAPSHOTDIR}"
+	cd "${MIRROR_DIR}"
+	find -name '*.warc' -exec gzip \{\} \;
+
+	echo '$' make-snapshot.pl "${MIRROR_DIR}/" "${SNAPSHOTDIR}"
+	make-snapshot.pl "${MIRROR_DIR}/" "${SNAPSHOTDIR}"
 
 
 echo "Completed HTML front page dump of ${DATA_URL}: " $( date )
