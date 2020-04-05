@@ -1,5 +1,9 @@
 #!/bin/bash
 
+SCRIPT_PATH=$( which "$0" )
+SCRIPT_DIR=$( dirname "${SCRIPT_PATH}" )
+PATH="${SCRIPT_DIR}:${PATH}"
+
 DATA_URL="$1"
 SITE_TAG="$2"
 DATESTAMP="$3"
