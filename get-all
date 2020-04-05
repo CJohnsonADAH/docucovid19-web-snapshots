@@ -31,7 +31,7 @@ if [ ! -z "$1" ] ; then
 	fi
 fi
 
-if [[ ! "${DATAONLY}" ]] ; then
+if [[ "${DATAONLY}" -eq 0 ]] ; then
 	STEP_FILE="${DATA_DIR}/snapshot-step.txt"
 	STEP_PERIOD=4
 
@@ -76,7 +76,7 @@ fi
 
 if [[ "${DATAONLY}" -eq 0 ]] ; then
 
-wget --mirror 'http://${DATA_SERVER}/sources.tsv.txt'
+wget --mirror "http://${DATA_SERVER}/sources.tsv.txt"
 while IFS="" read LINE; do
 	WWW_PERIOD=$( printf "%s" "$LINE" | cut -f 1 )
 	WWW_SLUG=$( printf "%s" "$LINE" | cut -f 2 )
