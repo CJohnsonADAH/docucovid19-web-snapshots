@@ -88,10 +88,13 @@ if [[ "${SITESTEP}" -eq 0 ]] ; then
 
 	wget ${CERT_SWITCH} ${WG_RECURSE} ${WG_LEVEL} ${WG_TIMESTAMPING} --convert-links --adjust-extension ${INCLUDE_SWITCH} ${EXCLUDE_SWITCH} --page-requisites --backup-converted --warc-file="${SITE_TAG}-${DATESTAMP}" "${DATA_URL}"
 
-	mkdir --verbose "${HTMLPAGE_DATA}${DATESTAMP}.mirror"
-	cd "${HTMLPAGE_DATA}${DATESTAMP}.mirror"
+	SNAPSHOTDIR=${DATA_DIR}/html/snapshots/${SITE_TAG}
+	if [ ! -d "${SNAPSHOTDIR}" ] ; then
+		mkdir --parents "${SNAPSHOTDIR}"
+	fi
 
-	rsync --archive --itemize-changes --exclude=warc "${DATA_DIR}/mirror_${SITE_TAG}/" ./
+	echo '$' make-snapshot.pl "${DATA_DIR}/mirror_${SITE_TAG}/" "${SNAPSHOTDIR}"
+	make-snapshot.pl "${DATA_DIR}/mirror_${SITE_TAG}/" "${SNAPSHOTDIR}"
 
 fi
 
