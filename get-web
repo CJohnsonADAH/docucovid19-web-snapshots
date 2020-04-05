@@ -53,6 +53,10 @@ echo "${DATA_URL}" > "${URL_OUT}"
 wget ${CERT_SWITCH} --output-document="${DATA_OUT}" --warc-file="${WARC_OUT}" "${DATA_URL}"
 
 if [[ "${SITESTEP}" -eq 0 ]] ; then
+	WG_WARC="--warc-file=${SITE_TAG}-${DATESTAMP}"
+else
+	WG_WARC=""
+fi
 
 	cd "${DATA_DIR}"
 	if [ ! -d "./mirror_${SITE_TAG}" ] ; then
@@ -84,9 +88,12 @@ if [[ "${SITESTEP}" -eq 0 ]] ; then
 		WG_LEVEL=""
 		WG_TIMESTAMPING=""
 	fi
-	echo wget ${CERT_SWITCH} ${WG_RECURSE} ${WG_LEVEL} ${WG_TIMESTAMPING} --convert-links --adjust-extension ${INCLUDE_SWITCH} ${EXCLUDE_SWITCH} --page-requisites --backup-converted --warc-file="${SITE_TAG}-${DATESTAMP}" "${DATA_URL}"
+	echo '$' wget ${CERT_SWITCH} ${WG_RECURSE} ${WG_LEVEL} ${WG_TIMESTAMPING} --convert-links --adjust-extension ${INCLUDE_SWITCH} ${EXCLUDE_SWITCH} --page-requisites --backup-converted --warc-file="${SITE_TAG}-${DATESTAMP}" "${DATA_URL}"
 
-	wget ${CERT_SWITCH} ${WG_RECURSE} ${WG_LEVEL} ${WG_TIMESTAMPING} --convert-links --adjust-extension ${INCLUDE_SWITCH} ${EXCLUDE_SWITCH} --page-requisites --backup-converted --warc-file="${SITE_TAG}-${DATESTAMP}" "${DATA_URL}"
+	wget ${CERT_SWITCH} ${WG_RECURSE} ${WG_LEVEL} ${WG_TIMESTAMPING} --convert-links --adjust-extension ${INCLUDE_SWITCH} ${EXCLUDE_SWITCH} --page-requisites --backup-converted ${WG_WARC} "${DATA_URL}"
+
+	#mkdir --verbose "${HTMLPAGE_DATA}${DATESTAMP}.mirror"
+	#cd "${HTMLPAGE_DATA}${DATESTAMP}.mirror"
 
 	SNAPSHOTDIR=${DATA_DIR}/html/snapshots/${SITE_TAG}
 	if [ ! -d "${SNAPSHOTDIR}" ] ; then
@@ -96,7 +103,6 @@ if [[ "${SITESTEP}" -eq 0 ]] ; then
 	echo '$' make-snapshot.pl "${DATA_DIR}/mirror_${SITE_TAG}/" "${SNAPSHOTDIR}"
 	make-snapshot.pl "${DATA_DIR}/mirror_${SITE_TAG}/" "${SNAPSHOTDIR}"
 
-fi
 
 echo "Completed HTML front page dump of ${DATA_URL}: " $( date )
 
