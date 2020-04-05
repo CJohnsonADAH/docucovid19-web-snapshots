@@ -66,6 +66,9 @@ if [[ "${SITESTEP}" -eq 0 ]] ; then
 	if [[ "${SITE_TAG}" == "bar" ]] ; then
 		INCLUDE_SWITCH='--include-directories=alabama-state-bar-coronavirus-covid-19-safety-measures,assets,css,images,wp-content,wp-includes'
 		EXCLUDE_SWITCH='--exclude-directories=*'
+	elif [[ "${SITE_TAG}" == "gov" ]] ; then
+		INCLUDE_SWITCH='--include-directories=assets,css,img,js,modules,newsroom,wp-content,wp-includes'
+		EXCLUDE_SWITCH='--exclude-directories=*'
 	fi
 
 	if [[ "${STEPMOD}" -gt 1 ]] ; then
