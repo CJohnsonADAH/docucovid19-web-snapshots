@@ -72,6 +72,12 @@ DATA_URL="${DATA_PATH}?f=json&${DATA_PARAMS}"
 
 get-data "${DATA_URL}" "testsites" "${DATESTAMP}" "${DATA_DIR}"
 
+DATA_PATH="https://services7.arcgis.com/4RQmZZ0yaZkGR1zy/arcgis/rest/services/COV19_Public_Statewide_Summary/FeatureServer/0/query"
+DATA_PARAMS="where=1%3D1&returnGeometry=false&spatialRel=esriSpatialRelIntersects&outFields=*&outStatistics=%5B%7B%22statisticType%22%3A%22sum%22%2C%22onStatisticField%22%3A%22hospitalized%22%2C%22outStatisticFieldName%22%3A%22value%22%7D%5D&cacheHint=true"
+DATA_URL="${DATA_PATH}?f=json&${DATA_PARAMS}"
+
+get-data "${DATA_URL}" "statewide" "${DATESTAMP}" "${DATA_DIR}"
+
 fi
 
 if [[ "${DATAONLY}" -eq 0 ]] ; then
