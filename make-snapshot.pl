@@ -16,8 +16,13 @@ $t0 = time;
 # Cycle through the command line arguments for paths and flags. Flags go to rsync
 @paths = ();
 @flags = ();
+$timestamp = sprintf('%d%02d%02d%02d%02d%02dZ', $date[0], $date[1], $date[2], $hour, $min, $sec);
+$manualTimestamp = 0;
 for ($i=0; $i<=$#ARGV; $i++) {
-	if ($ARGV[$i] =~ /^--?[A-Za-z0-9]/) {
+	if ($ARGV[$i] =~ /^--timestamp=([A-Za-z0-9]+)/) {
+		$timestamp = $1;
+		$manualTimestamp = 1;
+	} elsif ($ARGV[$i] =~ /^--?[A-Za-z0-9]/) {
 		@flags = (@flags, $ARGV[$i]);
 	} else {
 		@paths = (@paths, $ARGV[$i]);
@@ -41,7 +46,7 @@ if ($destination =~ /^((\S+):)(.*)$/) {
 	$destination = Cwd::abs_path($destination) . "/";
 }
 
-$suffix = sprintf('%d%02d%02d%02d%02d%02dZ', $date[0], $date[1], $date[2], $hour, $min, $sec);
+$suffix = $timestamp;
 $destination_partialpath = $destination.$suffix.'.partial/';
 $destination_finalpath = $destination.$suffix;
 
@@ -59,10 +64,13 @@ if (!$errno) { # success
 	} else {
 		$destination_finalpath = $destination_partialpath;
 	}
-	system (@RSH, @LN, $destination_finalpath, $destination_freshest);
-
+	if (!$manualTimestamp) {
+		system (@RSH, @LN, $destination_finalpath, $destination_freshest);
+	}
 	if (!$errno) {
-		$errno = system (@RSH, @LN, $destination_finalpath, $destination_verified);
+		if (!$manualTimestamp) {
+			$errno = system (@RSH, @LN, $destination_finalpath, $destination_verified);
+		}
 		if ($errno) {
 			print STDERR "REMOTE SYMLINK ERROR: terminated with code $errno\n";
 		}
