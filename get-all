@@ -13,22 +13,39 @@ if [[ ! -d "${DATA_DIR}" ]] ; then
 fi
 cd "${DATA_DIR}"
 
+SYNC=0
 DATAONLY=0
 WEBONLY=0
 if [ ! -z "$1" ] ; then
 	if [ "$1" == "--sync" ] ; then
-		echo "=== Sync: Preparing for Transmit ==="
-		find -name '*.warc' -exec gzip \{\} \;
-		echo "... transmitting via rsync ..."
-		rsync --archive --itemize-changes --progress --exclude="mirror_*" --exclude="${DATA_SERVER}" ./ ${DATA_SERVER}:${DATA_SLUG}/
-		exit
-	elif [ "$1" == "--data" ] ; then
+		SYNC=1
+		shift
+	fi
+
+	if [ "$1" == "--data" ] ; then
 		DATAONLY=1
 		shift
 	elif [ "$1" == "--web" ] ; then
 		WEBONLY=1
 		shift
 	fi
+fi
+
+if [ "${SYNC}" -ne 0 ] ; then
+	echo "=== Sync: Preparing for Transmit ==="
+	find -name '*.warc' -exec gzip \{\} \;
+	echo "... transmitting via rsync ..."
+	if [ "${DATAONLY}" -eq 0 ] ; then
+		if [ "${WEBONLY}" -eq 0 ] ; then
+			rsync --archive --itemize-changes --progress --exclude="mirror_*" --hard-links --exclude="${DATA_SERVER}" ./ ${DATA_SERVER}:${DATA_SLUG}/
+		else
+			rsync --archive --itemize-changes --progress --hard-links ./html/ ${DATA_SERVER}:${DATA_SLUG}/html/
+		fi
+	else
+		rsync --archive --itemize-changes --progress --exclude="mirror_*" --hard-links ./data/ ${DATA_SERVER}:${DATA_SLUG}/data/
+
+	fi
+	exit
 fi
 
 if [[ "${DATAONLY}" -eq 0 ]] ; then
