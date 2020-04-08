@@ -64,13 +64,9 @@ if (!$errno) { # success
 	} else {
 		$destination_finalpath = $destination_partialpath;
 	}
-	if (!$manualTimestamp) {
-		system (@RSH, @LN, $destination_finalpath, $destination_freshest);
-	}
+	system (@RSH, @LN, $destination_finalpath, $destination_freshest);
 	if (!$errno) {
-		if (!$manualTimestamp) {
-			$errno = system (@RSH, @LN, $destination_finalpath, $destination_verified);
-		}
+		$errno = system (@RSH, @LN, $destination_finalpath, $destination_verified);
 		if ($errno) {
 			print STDERR "REMOTE SYMLINK ERROR: terminated with code $errno\n";
 		}

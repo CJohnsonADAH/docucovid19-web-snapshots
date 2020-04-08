@@ -108,8 +108,8 @@ fi
 	cd "${MIRROR_DIR}"
 	find -name '*.warc' -exec gzip \{\} \;
 
-	echo '$' make-snapshot.pl "${MIRROR_DIR}/" "${SNAPSHOTDIR}"
-	make-snapshot.pl "${MIRROR_DIR}/" "${SNAPSHOTDIR}"
+	echo '$' make-snapshot.pl "${MIRROR_DIR}/" "${SNAPSHOTDIR}" --timestamp="${DATESTAMP}"
+	make-snapshot.pl "${MIRROR_DIR}/" "${SNAPSHOTDIR}" --timestamp="${DATESTAMP}" --exclude=warc
 
 
 echo "Completed HTML front page dump of ${DATA_URL}: " $( date )
