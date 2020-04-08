@@ -54,7 +54,7 @@ if [ "${SYNC}" -ne 0 ] ; then
 fi
 
 if [[ "${DATAONLY}" -eq 0 ]] ; then
-	if [[ -z "${FILTERSLUG}" ]] ; then
+	if [[ -z "${FILTER_SLUG}" ]] ; then
 		STEP_FILE="${DATA_DIR}/snapshot-step.txt"
 		STEP_PERIOD=4
 
