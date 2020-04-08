@@ -15,9 +15,17 @@ WG_INCLUDE=""
 WG_EXCLUDE="--no-parent"
 declare -A WG_ARGV=()
 
+WG_ARGV[recursive]="--recursive"
+WG_ARGV[level]="--level=1"
+WG_ARGV[timestamping]="--timestamping"
+WG_ARGV[convert-links]="--convert-links"
+WG_ARGV[page-requisites]="--page-requisites"
+WG_ARGV[backup-converted]="--backup-converted"
+WG_ARGV[adjust-extension]="--adjust-extension"
 WG_ARGV[restrict-file-names]="--restrict-file-names=windows"
 WG_ARGV[timeout]="--timeout=20"
 WG_ARGV[tries]="--tries=10"
+
 while [ ! -z "$1" ] ; do
 	if [[ "$1" =~ ^--include-directories= ]] ; then
 		WG_INCLUDE="$1"
@@ -84,18 +92,9 @@ fi
 	fi
 	mv *.warc *.warc.gz ./warc
 
-	if [[ "${STEPMOD}" -gt 1 ]] ; then
-		WG_RECURSE="--recursive"
-		WG_LEVEL="--level=1"
-		WG_TIMESTAMPING="--timestamping"
-	else
-		WG_RECURSE=""
-		WG_LEVEL=""
-		WG_TIMESTAMPING=""
-	fi
-	echo '$' wget ${WG_RECURSE} ${WG_LEVEL} ${WG_TIMESTAMPING} --convert-links --adjust-extension ${WG_INCLUDE} ${WG_EXCLUDE} --page-requisites --backup-converted ${WG_WARC} ${WG_ARGV[@]} "${DATA_URL}"
+	echo '$' wget  ${WG_INCLUDE} ${WG_EXCLUDE} ${WG_WARC} ${WG_ARGV[@]} "${DATA_URL}"
 
-	wget ${WG_RECURSE} ${WG_LEVEL} ${WG_TIMESTAMPING} --convert-links --adjust-extension ${WG_INCLUDE} ${WG_EXCLUDE} --page-requisites --backup-converted ${WG_WARC} ${WG_ARGV[@]} "${DATA_URL}"
+	wget ${WG_INCLUDE} ${WG_EXCLUDE} ${WG_WARC} ${WG_ARGV[@]} "${DATA_URL}"
 
 	#mkdir --verbose "${HTMLPAGE_DATA}${DATESTAMP}.mirror"
 	#cd "${HTMLPAGE_DATA}${DATESTAMP}.mirror"
