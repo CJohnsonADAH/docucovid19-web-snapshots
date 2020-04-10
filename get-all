@@ -16,6 +16,9 @@ cd "${DATA_DIR}"
 SYNC=0
 DATAONLY=0
 WEBONLY=0
+
+DAY_STEPS=4 # poll every 6 hours
+
 if [ ! -z "$1" ] ; then
 	if [ "$1" == "--sync" ] ; then
 		SYNC=1
@@ -56,17 +59,16 @@ fi
 if [[ "${DATAONLY}" -eq 0 ]] ; then
 	if [[ -z "${FILTER_SLUG}" ]] ; then
 		STEP_FILE="${DATA_DIR}/snapshot-step.txt"
-		STEP_PERIOD=4
 
 		if [ -r "${STEP_FILE}" ] ; then
 			STEP=$( cat "${DATA_DIR}/snapshot-step.txt" )
 		else
 			STEP=3
 		fi
-		STEP=$(( (STEP + 1) % STEP_PERIOD ))
+		STEP=$(( (STEP + 1) ))
 		printf "%d\n" "${STEP}" > "${STEP_FILE}"
 
-		printf "*** Step %d of %d ...\n" "${STEP}" "${STEP_PERIOD}"
+		printf "*** Poll # %d ...\n" "${STEP}"
 	fi
 fi
 

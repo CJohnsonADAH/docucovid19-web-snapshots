@@ -49,7 +49,16 @@ if [ -z "${STEPMOD}" ] ; then
 	STEPMOD=1
 fi
 
-SITESTEP=$(( "${STEP}" % "${STEPMOD}" ))
+DAYSTEPS=4
+SITESTEP=$(( STEP % STEPMOD ))
+RATIO=$(( STEPMOD / DAYSTEPS ))
+OFFCYCLE=$(( SITESTEP % RATIO ))
+
+if [[ "${OFFCYCLE}" -gt 0 ]] ; then
+	TS_TODAY=$( date )
+	printf "Deferring HTML front page dump of %s (%d-day cycle): %s" "${DATA_URL}" "${RATIO}" "${TS_TODAY}"
+	exit
+fi
 
 if [ -z "${DATA_DIR}" ] ; then
 	DATA_DIR="${HOME}/covid-data"
