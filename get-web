@@ -1,8 +1,9 @@
 #!/bin/bash
 
-SCRIPT_PATH=$( which "$0" )
+SCRIPT_PATH=$( readlink -f "$0" )
 SCRIPT_DIR=$( dirname "${SCRIPT_PATH}" )
-PATH="${SCRIPT_DIR}:${PATH}"
+SCREENCAP_DIR="${SCRIPT_DIR}/screencaps"
+PATH="${SCRIPT_DIR}:${SCREENCAP_DIR}:${PATH}"
 
 DATA_URL="$1" ; shift
 SITE_TAG="$1" ; shift
@@ -10,11 +11,13 @@ DATESTAMP="$1" ; shift
 DATA_DIR="$1" ; shift
 STEP="$1" ; shift
 STEPMOD="$1" ; shift
+DURATION="$1" ; shift
 
 WG_INCLUDE=""
 WG_EXCLUDE="--no-parent"
 declare -A WG_ARGV=()
 
+WG_ARGV[no-check-certificate]="" # off by default; individual sites can turn it on
 WG_ARGV[recursive]="--recursive"
 WG_ARGV[level]="--level=1"
 WG_ARGV[timestamping]="--timestamping"
@@ -77,11 +80,17 @@ HTMLPAGE_DATA="${HTMLPAGE_DATA}-"
 
 URL_OUT="${HTMLPAGE_DATA}${DATESTAMP}.url.txt"
 DATA_OUT="${HTMLPAGE_DATA}${DATESTAMP}.html"
+DATA_PNG="${HTMLPAGE_DATA}${DATESTAMP}.png"
 HEAD_OUT="${HTMLPAGE_DATA}${DATESTAMP}.head"
 WARC_OUT="${HTMLPAGE_DATA}${DATESTAMP}"
 
 echo "${DATA_URL}" > "${URL_OUT}"
-wget ${CERT_SWITCH} --output-document="${DATA_OUT}" --warc-file="${WARC_OUT}" "${DATA_URL}"
+wget ${WG_ARGV[no-check-certificate]} --output-document="${DATA_OUT}" --warc-file="${WARC_OUT}" "${DATA_URL}"
+
+	LWD="${PWD}"
+	cd "${SCREENCAP_DIR}"
+	node --unhandled-rejections=strict ./screencap.js --headless "${DATA_URL}" "${DATA_PNG}" "${DURATION}"
+	cd "${LWD}"
 
 # mirror the site
 WG_WARC=""

@@ -110,12 +110,27 @@ if [[ "${DATAONLY}" -eq 0 ]] ; then
 
 wget --mirror "http://${DATA_SERVER}/sources.tsv.txt"
 while IFS="" read LINE; do
+	RE="--regexp-extended"
+
+	# remove comments and trim
+	LINE=$(
+		printf "%s" "${LINE}" \
+		| sed ${RE} 's/(^|\s)[#].*$//' \
+		| sed ${RE} 's/^\s+//' \
+		| sed ${RE} 's/\s+$//'
+	)
+	
+	if [ -z "${LINE}" ] ; then
+		continue
+	fi
+
 	WWW_PERIOD=$( printf "%s" "$LINE" | cut -f 1 )
-	WWW_SLUG=$( printf "%s" "$LINE" | cut -f 2 )
-	WWW_URL=$( printf "%s" "$LINE" | cut -f 3 )
+	WWW_DURATION=$( printf "%s" "$LINE" | cut -f 2 )
+	WWW_SLUG=$( printf "%s" "$LINE" | cut -f 3 )
+	WWW_URL=$( printf "%s" "$LINE" | cut -f 4 )
 
 	declare -a WWW_SWITCHES=()
-	FIELD=4
+	FIELD=5
 	WWW_SWITCH="dummy"
 	while [ ! -z "${WWW_SWITCH}" ] ; do
 		WWW_SWITCH=$( printf "%s" "$LINE" | cut -f "${FIELD}" )
@@ -128,7 +143,7 @@ while IFS="" read LINE; do
 	if [ ! -z "${WWW_URL}" ] ; then
 		if [ -z "${FILTER_SLUG}" -o "${WWW_SLUG}" = "${FILTER_SLUG}" ] ; then
 
-		get-web "${WWW_URL}" "${WWW_SLUG}" "${DATESTAMP}" "${DATA_DIR}" "${STEP}" "${WWW_PERIOD}" ${WWW_SWITCHES[@]}
+		get-web "${WWW_URL}" "${WWW_SLUG}" "${DATESTAMP}" "${DATA_DIR}" "${STEP}" "${WWW_PERIOD}" "${WWW_DURATION}" ${WWW_SWITCHES[@]}
 
 		fi
 	fi
