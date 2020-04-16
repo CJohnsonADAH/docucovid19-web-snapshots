@@ -33,9 +33,13 @@ WG_ARGV[tries]="--tries=10"
 while [ ! -z "$1" ] ; do
 	if [[ "$1" =~ ^--include-directories=(.*) ]] ; then
 		WG_INCLUDE="$1"
-		if [ "${BASH_REMATCH[1]}" != "*" ] ; then
+		if [ "${BASH_REMATCH[1]}" = "-" ] ; then
+			WG_INCLUDE=""
+			WG_EXCLUDE=""
+		elif [ "${BASH_REMATCH[1]}" != "*" ] ; then
 			WG_EXCLUDE="--exclude-directories=*"
 		else
+			WG_INCLUDE=""
 			WG_EXCLUDE=""
 		fi
 	elif [[ "$1" =~ ^--([^=]+)(=.+)? ]] ; then
@@ -60,6 +64,9 @@ fi
 DAYSTEPS=4
 SITESTEP=$(( STEP % STEPMOD ))
 RATIO=$(( STEPMOD / DAYSTEPS ))
+if [ "${RATIO}" -eq 0 ] ; then
+	RATIO=1
+fi
 OFFCYCLE=$(( SITESTEP % RATIO ))
 
 if [[ "${OFFCYCLE}" -gt 0 ]] ; then
