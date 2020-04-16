@@ -13,30 +13,78 @@ if [[ ! -d "${DATA_DIR}" ]] ; then
 fi
 cd "${DATA_DIR}"
 
+declare -a GA_ARGV=("$0")
+declare -a GA_OBJS=()
+declare -A GA_SWITCHES=()
+declare -A GA_PARAMS=()
+
+while [ $# -gt 0 ] ; do
+	GA_ARGV=("${GA_ARGV[@]}" "$1")
+	if [[ "$1" =~ ^--([^=]+)(=(.*))?$ ]] ; then
+		KEY="${BASH_REMATCH[1]}"
+		GA_SWITCHES["${KEY}"]="${BASH_REMATCH[0]}"
+		GA_PARAMS["${KEY}"]="${KEY}"
+		if [ ! -z "${BASH_REMATCH[2]}" ] ; then
+			GA_PARAMS["${KEY}"]="${BASH_REMATCH[3]}"
+		fi
+	else
+		GA_OBJS=("${GA_OBJS[@]}" "$1")
+	fi
+	shift
+done
+
+if [ "${GA_PARAMS[test]}" = "argv" ] ; then
+	declare -p GA_ARGV
+	declare -p GA_OBJS
+	declare -p GA_SWITCHES
+	declare -p GA_PARAMS
+	exit
+fi
+
+# Defaults
 SYNC=0
 DATAONLY=0
 WEBONLY=0
 
-DAY_STEPS=4 # poll every 6 hours
+POLL_INTERVAL=6 # hours
 
-if [ ! -z "$1" ] ; then
-	if [ "$1" == "--sync" ] ; then
-		SYNC=1
-		shift
-	fi
+if [[ "${GA_PARAMS[sync]}" == "sync" ]] ; then
+	SYNC=1
+fi
 
-	if [ "$1" == "--data" ] ; then
-		DATAONLY=1
-		shift
-	elif [ "$1" == "--web" ] ; then
-		WEBONLY=1
-		shift
-	fi
+if [[ "${GA_PARAMS[data]}" == "data" ]] ; then
+	DATAONLY=1
+fi
+
+if [[ "${GA_PARAMS[web]}" == "web" ]] ; then
+	WEBONLY=1
+fi
+
+if [[ ( "${WEBONLY}" -eq 1 ) && ( "${DATAONLY}" -eq 1 ) ]] ; then
+	DATAONLY=0
+	WEBONLY=0
 fi
 
 FILTER_SLUG=""
-if [ ! -z "$1" ] ; then
-	FILTER_SLUG="$1"
+for SLUG in "${GA_OBJS[@]}" ; do
+	if [ ! -z "${SLUG}" ] ; then
+		if [ ! -z "${FILTER_SLUG}" ] ; then
+			FILTER_SLUG="${FILTER_SLUG}|"
+		fi
+		FILTER_SLUG="${FILTER_SLUG}${SLUG}"
+	fi
+done
+
+if [ ! -z "${FILTER_SLUG}" ] ; then
+	FILTER_SLUG="(${FILTER_SLUG})"
+fi
+
+if [ "${GA_PARAMS[test]}" = "switches" ] ; then
+	printf "SYNC: %d\n" "${SYNC}"
+	printf "WEBONLY: %d\n" "${WEBONLY}"
+	printf "DATAONLY: %d\n" "${DATAONLY}"
+	printf "FILTER SLUG: %s\n" "${FILTER_SLUG}"
+	exit
 fi
 
 if [ "${SYNC}" -ne 0 ] ; then
