@@ -12,7 +12,7 @@ DATA_OUT="${DATA_PREFIX}${DATESTAMP}.json"
 WARC_OUT="${DATA_PREFIX}${DATESTAMP}"
 
 echo "${DATA_URL}" > "${URL_OUT}"
-wget --output-document="${DATA_OUT}" --warc-file="${WARC_OUT}" "${DATA_URL}"
+wget --no-verbose --output-document="${DATA_OUT}" --warc-file="${WARC_OUT}" "${DATA_URL}"
 
 echo "Completed ${DATA_TAG} data dump: " $( date )
 
