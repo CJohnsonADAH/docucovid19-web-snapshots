@@ -46,7 +46,7 @@ SYNC=0
 DATAONLY=0
 WEBONLY=0
 
-POLL_INTERVAL=6 # hours
+POLL_INTERVAL=$( get-all-polling-interval --hours )
 
 if [[ "${GA_PARAMS[sync]}" == "sync" ]] ; then
 	SYNC=1
@@ -79,7 +79,8 @@ if [ ! -z "${FILTER_SLUG}" ] ; then
 	FILTER_SLUG="(${FILTER_SLUG})"
 fi
 
-if [ "${GA_PARAMS[test]}" = "switches" ] ; then
+if [ "${GA_PARAMS[test]}" = "parameters" ] ; then
+	printf "POLL INTERVAL: %d\n" "${POLL_INTERVAL}"
 	printf "SYNC: %d\n" "${SYNC}"
 	printf "WEBONLY: %d\n" "${WEBONLY}"
 	printf "DATAONLY: %d\n" "${DATAONLY}"

@@ -61,13 +61,29 @@ if [ -z "${STEPMOD}" ] ; then
 	STEPMOD=1
 fi
 
-DAYSTEPS=4
+POLL_INTERVAL=$( get-all-polling-interval --hours )
+DAYSTEPS=$(( 24 / POLL_INTERVAL ))
 SITESTEP=$(( STEP % STEPMOD ))
 RATIO=$(( STEPMOD / DAYSTEPS ))
 if [ "${RATIO}" -eq 0 ] ; then
 	RATIO=1
 fi
 OFFCYCLE=$(( SITESTEP % RATIO ))
+
+if [[ "${DATA_URL}" == "--test" ]] ; then
+	printf "DATA_URL: %s\n" "${DATA_URL}"
+	printf "SITE_TAG: %s\n" "${SITE_TAG}"
+	printf "DATESTAMP: %s\n" "${DATESTAMP}"
+	printf "DATA_DIR: %s\n" "${DATA_DIR}"
+	printf "STEP: %d\n" "${STEP}"
+	printf "STEPMOD: %d\n" "${STEPMOD}"
+	printf "DURATION: %d\n" "${DURATION}"
+	printf "DAYSTEPS: %d\n" "${DAYSTEPS}"
+	printf "SITESTEP: %d\n" "${SITESTEP}"
+	printf "RATIO: %d\n" "${RATIO}"
+	printf "OFFCYCLE: %d\n" "${OFFCYCLE}"
+	exit
+fi
 
 if [[ "${OFFCYCLE}" -gt 0 ]] ; then
 	TS_TODAY=$( date )
