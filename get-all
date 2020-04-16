@@ -114,9 +114,11 @@ if [[ "${DATAONLY}" -eq 0 ]] ; then
 			STEP=3
 		fi
 		STEP=$(( (STEP + 1) ))
-		printf "%d\n" "${STEP}" > "${STEP_FILE}"
+		if [[ "${GA_PARAMS[dry-run]}" -ne "dry-run" ]] ; then
+			printf "%d\n" "${STEP}" > "${STEP_FILE}"
+		fi
 
-		printf "*** Poll # %d ...\n" "${STEP}"
+		printf "*** Web Site Poll # %d ***\n" "${STEP}"
 	fi
 fi
 
@@ -124,29 +126,32 @@ DATESTAMP=$( TZ="UTC" date +"%Y%m%d%H%M%SZ" )
 
 if [[ "${WEBONLY}" -eq 0 ]] ; then
 
-	printf "*** Getting data ...\n"
+	printf "=== Capturing Data Sets ===\n"
 	DATA_SOURCES="data-sources.tsv.txt"
 	DATA_SOURCES_URL="${DATA_SERVER}/${DATA_SOURCES}"
 
-wget --mirror "http://${DATA_SOURCES_URL}"
+wget --no-verbose --mirror "http://${DATA_SOURCES_URL}"
 while IFS="" read LINE; do
 	DATA_SLUG=$( printf "%s" "$LINE" | cut -f 1 )
 	DATA_PATH=$( printf "%s" "$LINE" | cut -f 2 )
 	DATA_PARAM=$( printf "%s" "$LINE" | cut -f 3 )
 
 	if [ ! -z "${DATA_PATH}" ] ; then
-		if [ -z "${FILTER_SLUG}" -o "${DATA_SLUG}" = "${FILTER_SLUG}" ] ; then
-
 		DATA_URL="${DATA_PATH}"
 		if [ ! -z "${DATA_PARAM}" ] ; then
 			DATA_URL="${DATA_URL}?f=json&${DATA_PARAM}"
 		fi
 		
-		echo '$' get-data "${DATA_URL}" "${DATA_SLUG}" "${DATESTAMP}" "${DATA_DIR}"
-
-		get-data "${DATA_URL}" "${DATA_SLUG}" "${DATESTAMP}" "${DATA_DIR}"
-
+		GET_DATA="noop"
+		if [[ "${DATA_SLUG}" =~ ${FILTER_SLUG} ]] ; then
+			if [[ "${GA_PARAMS[dry-run]}" -ne "dry-run" ]] ; then
+				GET_DATA="get-data"
+			fi
+			printf "\n"
+			echo '$' ${GET_DATA} "${DATA_URL}" "${DATA_SLUG}" "${DATESTAMP}" "${DATA_DIR}"
 		fi
+
+		${GET_DATA} "${DATA_URL}" "${DATA_SLUG}" "${DATESTAMP}" "${DATA_DIR}"
 
 	fi
 done < "${DATA_DIR}/${DATA_SOURCES_URL}"
@@ -156,7 +161,11 @@ fi
 
 if [[ "${DATAONLY}" -eq 0 ]] ; then
 
-wget --mirror "http://${DATA_SERVER}/sources.tsv.txt"
+	printf "\n=== Capturing Web Sites ===\n"
+
+	OFFSET=0
+
+wget --no-verbose --mirror "http://${DATA_SERVER}/sources.tsv.txt"
 while IFS="" read LINE; do
 	RE="--regexp-extended"
 
@@ -189,17 +198,26 @@ while IFS="" read LINE; do
 	done
 
 	if [ ! -z "${WWW_URL}" ] ; then
-		if [ -z "${FILTER_SLUG}" -o "${WWW_SLUG}" = "${FILTER_SLUG}" ] ; then
+		SITESTEP=$(( STEP + OFFSET ))
 
-		get-web "${WWW_URL}" "${WWW_SLUG}" "${DATESTAMP}" "${DATA_DIR}" "${STEP}" "${WWW_PERIOD}" "${WWW_DURATION}" ${WWW_SWITCHES[@]}
-
+		GET_WEB="noop"
+		if [[ "${WWW_SLUG}" =~ ${FILTER_SLUG} ]] ; then
+			if [[ "${GA_PARAMS[dry-run]}" -ne "dry-run" ]] ; then
+				GET_WEB="get-web"
+			fi
+			printf "\n"
+			echo '$' ${GET_WEB} "${WWW_URL}" "${WWW_SLUG}" "${DATESTAMP}" "${DATA_DIR}" "${SITESTEP}" "${WWW_PERIOD}" "${WWW_DURATION}" ${WWW_SWITCHES[@]}
 		fi
+
+		${GET_WEB} "${WWW_URL}" "${WWW_SLUG}" "${DATESTAMP}" "${DATA_DIR}" "${SITESTEP}" "${WWW_PERIOD}" "${WWW_DURATION}" ${WWW_SWITCHES[@]}
+
 	fi
 
 	unset WWW_SWITCHES
+	OFFSET=$(( OFFSET + 1 ))
 done < "${DATA_DIR}/${DATA_SERVER}/sources.tsv.txt"
 
-echo "Completed web snapshots: " $( date )
+echo "[==] Completed web snapshots: " $( date ) " [==]"
 
 fi
 
