@@ -181,7 +181,8 @@ while IFS="" read LINE; do
 		continue
 	fi
 
-	WWW_PERIOD=$( printf "%s" "$LINE" | cut -f 1 )
+	WWW_CYCLE=$( printf "%s" "$LINE" | cut -f 1 )
+	WWW_PERIOD=$(( WWW_CYCLE / POLL_INTERVAL ))
 	WWW_DURATION=$( printf "%s" "$LINE" | cut -f 2 )
 	WWW_SLUG=$( printf "%s" "$LINE" | cut -f 3 )
 	WWW_URL=$( printf "%s" "$LINE" | cut -f 4 )
