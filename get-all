@@ -115,7 +115,7 @@ if [[ "${DATAONLY}" -eq 0 ]] ; then
 			STEP=3
 		fi
 		STEP=$(( (STEP + 1) ))
-		if [[ "${GA_PARAMS[dry-run]}" -ne "dry-run" ]] ; then
+		if [[ "${GA_PARAMS[dry-run]}" != "dry-run" ]] ; then
 			printf "%d\n" "${STEP}" > "${STEP_FILE}"
 		fi
 
@@ -145,7 +145,7 @@ while IFS="" read LINE; do
 		
 		GET_DATA="noop"
 		if [[ "${DATA_SLUG}" =~ ${FILTER_SLUG} ]] ; then
-			if [[ "${GA_PARAMS[dry-run]}" -ne "dry-run" ]] ; then
+			if [[ "${GA_PARAMS[dry-run]}" != "dry-run" ]] ; then
 				GET_DATA="get-data"
 			fi
 			printf "\n"
@@ -204,7 +204,7 @@ while IFS="" read LINE; do
 
 		GET_WEB="noop"
 		if [[ "${WWW_SLUG}" =~ ${FILTER_SLUG} ]] ; then
-			if [[ "${GA_PARAMS[dry-run]}" -ne "dry-run" ]] ; then
+			if [[ "${GA_PARAMS[dry-run]}" != "dry-run" ]] ; then
 				GET_WEB="get-web"
 			fi
 			printf "\n"
