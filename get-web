@@ -111,9 +111,17 @@ DATA_OUT="${HTMLPAGE_DATA}${DATESTAMP}.html"
 DATA_PNG="${HTMLPAGE_DATA}${DATESTAMP}.png"
 HEAD_OUT="${HTMLPAGE_DATA}${DATESTAMP}.head"
 WARC_OUT="${HTMLPAGE_DATA}${DATESTAMP}"
+WARC_SITE_OUT="${SITE_TAG}-${DATESTAMP}"
 
 echo "${DATA_URL}" > "${URL_OUT}"
 wget ${WG_ARGV[no-verbose]} ${WG_ARGV[no-check-certificate]} --output-document="${DATA_OUT}" --warc-file="${WARC_OUT}" "${DATA_URL}"
+
+if [ -r "${DATA_OUT}" ] ; then
+	sha512sum --tag "${DATA_OUT}" > "${DATA_OUT}.sha512"
+fi
+if [ -r "${WARC_OUT}.warc" ] ; then
+	sha512sum --tag "${WARC_OUT}.warc" > "${WARC_OUT}.warc.sha512"
+fi
 
 	LWD="${PWD}"
 	cd "${SCREENCAP_DIR}"
@@ -123,7 +131,7 @@ wget ${WG_ARGV[no-verbose]} ${WG_ARGV[no-check-certificate]} --output-document="
 # mirror the site
 WG_WARC=""
 if [[ "${SITESTEP}" -eq 0 ]] ; then
-	WG_WARC="--warc-file=${SITE_TAG}-${DATESTAMP}"
+	WG_WARC="--warc-file=${WARC_SITE_OUT}"
 fi
 
 	cd "${DATA_DIR}"
@@ -141,6 +149,12 @@ fi
 	echo '$' wget  ${WG_INCLUDE} ${WG_EXCLUDE} ${WG_WARC} ${WG_ARGV[@]} "${DATA_URL}"
 
 	wget ${WG_INCLUDE} ${WG_EXCLUDE} ${WG_WARC} ${WG_ARGV[@]} "${DATA_URL}"
+
+	if [ ! -z "${WG_WARC}" ] ; then
+		if [ -r "${WARC_SITE_OUT}.warc" ] ; then
+			sha512sum --tag "${WARC_SITE_OUT}.warc" > "${WARC_SITE_OUT}.warc.sha512"
+		fi
+	fi
 
 	#mkdir --verbose "${HTMLPAGE_DATA}${DATESTAMP}.mirror"
 	#cd "${HTMLPAGE_DATA}${DATESTAMP}.mirror"

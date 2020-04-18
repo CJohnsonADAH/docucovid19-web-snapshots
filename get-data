@@ -14,5 +14,14 @@ WARC_OUT="${DATA_PREFIX}${DATESTAMP}"
 echo "${DATA_URL}" > "${URL_OUT}"
 wget --no-verbose --output-document="${DATA_OUT}" --warc-file="${WARC_OUT}" "${DATA_URL}"
 
+if [ -r "${DATA_OUT}" ] ; then
+	#printf '$ sha512sum --tag "%s" > "%s.sha512"' "${DATA_OUT}" "${DATA_OUT}" ; printf "\n"
+	sha512sum --tag "${DATA_OUT}" > "${DATA_OUT}.sha512"
+fi
+if [ -r "${WARC_OUT}.warc" ] ; then
+	#printf '$ sha512sum --tag "%s" > "%s.sha512"' "${WARC_OUT}.warc" "${WARC_OUT}.warc" ; printf "\n"
+	sha512sum --tag "${WARC_OUT}.warc" > "${WARC_OUT}.warc.sha512"
+fi
+
 echo "Completed ${DATA_TAG} data dump: " $( date )
 
