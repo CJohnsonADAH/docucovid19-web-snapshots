@@ -6,7 +6,7 @@ export PATH="${SCRIPT_DIR}:${PATH}"
 
 export DATA_SERVER="alacovdat.dev.radgeek.net"
 export DATA_SLUG="covid-data"
-export DATA_DIR="${HOME}/${DATA_SLUG}"
+export DATA_DIR=$( readlink -f "${HOME}/${DATA_SLUG}" )
 
 if [[ ! -d "${DATA_DIR}" ]] ; then
 	mkdir --parents --verbose "${DATA_DIR}"
@@ -90,7 +90,9 @@ fi
 
 if [ "${SYNC}" -ne 0 ] ; then
 	echo "=== Sync: Preparing for Transmit ==="
-	find -name '*.warc' -exec gzip \{\} \;
+	echo '$' find "${DATA_DIR}" -maxdepth 4 -name '*.warc' -exec gzip --verbose \{\} \;
+	find "${DATA_DIR}" -maxdepth 4 -name '*.warc' -exec gzip --verbose \{\} \;
+
 	echo "... transmitting via rsync ..."
 	if [ "${DATAONLY}" -eq 0 ] ; then
 		if [ "${WEBONLY}" -eq 0 ] ; then
