@@ -87,7 +87,7 @@ fi
 
 if [[ "${OFFCYCLE}" -gt 0 ]] ; then
 	TS_TODAY=$( date )
-	printf "Deferring HTML front page dump of %s (%d-day cycle): %s" "${DATA_URL}" "${RATIO}" "${TS_TODAY}"
+	printf "\n[...] Deferring HTML front page dump of %s (%d-day cycle): %s [...]\n" "${DATA_URL}" "${RATIO}" "${TS_TODAY}"
 	exit
 fi
 

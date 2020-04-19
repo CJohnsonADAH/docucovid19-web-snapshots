@@ -202,7 +202,11 @@ while IFS="" read LINE; do
 	done
 
 	if [ ! -z "${WWW_URL}" ] ; then
-		SITESTEP=$(( STEP + OFFSET ))
+		if [[ -z "${FILTER_SLUG}" ]] ; then
+			SITESTEP=$(( STEP + OFFSET ))
+		else
+			SITESTEP=$(( STEP ))
+		fi
 
 		GET_WEB="noop"
 		if [[ "${WWW_SLUG}" =~ ${FILTER_SLUG} ]] ; then
