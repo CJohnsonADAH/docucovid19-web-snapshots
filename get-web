@@ -99,8 +99,12 @@ if [ -z "${DATESTAMP}" ] ; then
 fi
 
 HTMLPAGE_DATA="${DATA_DIR}/html"
+if [ ! -d "${HTMLPAGE_DATA}/${DATESTAMP}" ] ; then
+	mkdir --parents "${HTMLPAGE_DATA}/${DATESTAMP}"
+fi
+
 if [ ! -z "${SITE_TAG}" ] ; then
-	HTMLPAGE_DATA="${HTMLPAGE_DATA}/${SITE_TAG}"
+	HTMLPAGE_DATA="${HTMLPAGE_DATA}/${DATESTAMP}/${SITE_TAG}"
 fi
 HTMLPAGE_DATA="${HTMLPAGE_DATA}-"
 
