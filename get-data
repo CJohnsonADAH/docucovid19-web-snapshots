@@ -4,23 +4,37 @@ DATA_URL="$1"
 DATA_TAG="$2"
 DATESTAMP="$3"
 DATA_DIR="$4"
+DATA_TYPE="$5"
 
-DATA_PREFIX="${DATA_DIR}/data/${DATA_TAG}-"
+if [[ -z "${DATA_TYPE}" ]] ; then
+	DATA_TYPE="json"
+fi
+
+DATA_DIR_TS="${DATA_DIR}/data/${DATESTAMP}"
+DATA_PREFIX="${DATA_DIR_TS}/${DATA_TAG}-"
+
+if [ ! -d "${DATA_DIR_TS}" ] ; then
+	mkdir --parents --verbose "${DATA_DIR_TS}"
+fi
 
 URL_OUT="${DATA_PREFIX}${DATESTAMP}.url.txt"
-DATA_OUT="${DATA_PREFIX}${DATESTAMP}.json"
+DATA_OUT="${DATA_PREFIX}${DATESTAMP}.${DATA_TYPE}"
 WARC_OUT="${DATA_PREFIX}${DATESTAMP}"
 
 echo "${DATA_URL}" > "${URL_OUT}"
 wget --no-verbose --output-document="${DATA_OUT}" --warc-file="${WARC_OUT}" "${DATA_URL}"
 
 if [ -r "${DATA_OUT}" ] ; then
-	#printf '$ sha512sum --tag "%s" > "%s.sha512"' "${DATA_OUT}" "${DATA_OUT}" ; printf "\n"
-	sha512sum --tag "${DATA_OUT}" > "${DATA_OUT}.sha512"
+	DATA_OUT_DIR=$( dirname "${DATA_OUT}" )
+	DATA_OUT_FILE=$( basename "${DATA_OUT}" )
+	cd "${DATA_OUT_DIR}"
+	sha512sum --tag "${DATA_OUT_FILE}" > "${DATA_OUT}.sha512"
 fi
 if [ -r "${WARC_OUT}.warc" ] ; then
-	#printf '$ sha512sum --tag "%s" > "%s.sha512"' "${WARC_OUT}.warc" "${WARC_OUT}.warc" ; printf "\n"
-	sha512sum --tag "${WARC_OUT}.warc" > "${WARC_OUT}.warc.sha512"
+	WARC_OUT_DIR=$( dirname "${WARC_OUT}.warc" )
+	WARC_OUT_FILE=$( basename "${WARC_OUT}.warc" )
+	cd "${WARC_OUT_DIR}"
+	sha512sum --tag "${WARC_OUT_FILE}" > "${WARC_OUT}.warc.sha512"
 fi
 
 echo "Completed ${DATA_TAG} data dump: " $( date )

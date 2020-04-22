@@ -135,9 +135,10 @@ if [[ "${WEBONLY}" -eq 0 ]] ; then
 
 wget --no-verbose --mirror "http://${DATA_SOURCES_URL}"
 while IFS="" read LINE; do
-	DATA_SLUG=$( printf "%s" "$LINE" | cut -f 1 )
-	DATA_PATH=$( printf "%s" "$LINE" | cut -f 2 )
-	DATA_PARAM=$( printf "%s" "$LINE" | cut -f 3 )
+	DATA_TYPE=$( printf "%s" "$LINE" | cut -f 1 )
+	DATA_SLUG=$( printf "%s" "$LINE" | cut -f 2 )
+	DATA_PATH=$( printf "%s" "$LINE" | cut -f 3 )
+	DATA_PARAM=$( printf "%s" "$LINE" | cut -f 4 )
 
 	if [ ! -z "${DATA_PATH}" ] ; then
 		DATA_URL="${DATA_PATH}"
@@ -154,7 +155,7 @@ while IFS="" read LINE; do
 			echo '$' ${GET_DATA} "${DATA_URL}" "${DATA_SLUG}" "${DATESTAMP}" "${DATA_DIR}"
 		fi
 
-		${GET_DATA} "${DATA_URL}" "${DATA_SLUG}" "${DATESTAMP}" "${DATA_DIR}"
+		${GET_DATA} "${DATA_URL}" "${DATA_SLUG}" "${DATESTAMP}" "${DATA_DIR}" "${DATA_TYPE}"
 
 	fi
 done < "${DATA_DIR}/${DATA_SOURCES_URL}"
