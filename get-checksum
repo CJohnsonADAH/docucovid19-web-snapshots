@@ -1,0 +1,56 @@
+#!/bin/bash
+
+SCRIPT=$( which "$0" )
+SCRIPT_PATH=$( readlink -f "${SCRIPT}" )
+SCRIPT_DIR=$( dirname "${SCRIPT_PATH}" )
+SCRIPTNAME=$( basename "${SCRIPT_PATH}" )
+
+declare -a GCS_ARGV=()
+declare -a GCS_OBJECT=()
+declare -A GCS_PARAMS=()
+declare -A GCS_SWITCH=()
+while [ ! -z "$1" ] ; do
+	GCS_ARGV=("${GCS_ARGV[@]}" "$1")
+	if [[ "$1" =~ ^--([^=]+)(=.+)? ]] ; then
+		KEY="${BASH_REMATCH[1]}"
+		VALUE="${BASH_REMATCH[1]}"
+		if [[ ! -z "${BASH_REMATCH[2]}" ]] ; then
+			VALUE="${BASH_REMATCH[3]}"
+		fi
+
+		GCS_SWITCH["${KEY}"]="${BASH_REMATCH[0]}"
+		GCS_PARAMS["${KEY}"]="${VALUE}"
+	else
+		GCS_OBJECT=("${GCS_OBJECT[@]}" "$1")
+	fi
+	shift
+done
+
+EXITCODE=0
+for INFILE in "${GCS_OBJECT[@]}" ; do
+	if [[ -r "${INFILE}" ]] ; then
+		INFILE_PATH=$( readlink -f "${INFILE}" )
+		INFILE_DIR=$( dirname "${INFILE_PATH}" )
+		INFILE_NAME=$( basename "${INFILE_PATH}" )
+
+		if [[ ! -r "${INFILE}.sha512" ]] ; then
+			LWD="${PWD}"
+			cd "${INFILE_DIR}"
+			sha512sum --tag	"${INFILE_NAME}" > "${INFILE_NAME}.sha512"
+			if [[ "$?" -gt "${EXITCODE}" ]] ; then
+				EXITCODE="$?"
+			fi
+			cd "${LWD}"
+		fi
+		cat "${INFILE}.sha512"
+
+	elif [[ -f "${INFILE}" ]] ; then
+		( printf "[%s] %s: Could not read file; check owner and permissions.\n" "${SCRIPTNAME}" "${INFILE}" ; ls -l "${INFILE}" ) 1>&2
+		EXITCODE=255
+	else
+		printf "[%s] %s: No such file.\n" "${SCRIPTNAME}" "${INFILE}"
+		EXITCODE=255
+	fi
+done
+exit "${EXITCODE}"
+
