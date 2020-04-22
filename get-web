@@ -4,6 +4,7 @@ SCRIPT_PATH=$( readlink -f "$0" )
 SCRIPT_DIR=$( dirname "${SCRIPT_PATH}" )
 SCREENCAP_DIR="${SCRIPT_DIR}/screencaps"
 PATH="${SCRIPT_DIR}:${SCREENCAP_DIR}:${PATH}"
+SCREENCAP_PID=""
 
 DATA_URL="$1" ; shift
 SITE_TAG="$1" ; shift
@@ -12,6 +13,7 @@ DATA_DIR="$1" ; shift
 STEP="$1" ; shift
 STEPMOD="$1" ; shift
 DURATION="$1" ; shift
+
 
 WG_INCLUDE=""
 WG_EXCLUDE="--no-parent"
@@ -113,23 +115,35 @@ HTMLPAGE_DATA="${HTMLPAGE_DATA}-"
 URL_OUT="${HTMLPAGE_DATA}${DATESTAMP}.url.txt"
 DATA_OUT="${HTMLPAGE_DATA}${DATESTAMP}.html"
 DATA_PNG="${HTMLPAGE_DATA}${DATESTAMP}.png"
+DATA_PNG_N="${HTMLPAGE_DATA}${DATESTAMP}-%d.png"
 HEAD_OUT="${HTMLPAGE_DATA}${DATESTAMP}.head"
 WARC_OUT="${HTMLPAGE_DATA}${DATESTAMP}"
 WARC_SITE_OUT="${SITE_TAG}-${DATESTAMP}"
 
-echo "${DATA_URL}" > "${URL_OUT}"
+IFS="|" read -r -a DATA_URLS <<< "${DATA_URL}"
+DATA_URL="${DATA_URLS[0]}"
+echo "${DATA_URL}" > "${URL_OUT}" 
 wget ${WG_ARGV[no-verbose]} ${WG_ARGV[no-check-certificate]} --output-document="${DATA_OUT}" --warc-file="${WARC_OUT}" "${DATA_URL}"
 
-if [ -r "${DATA_OUT}" ] ; then
-	sha512sum --tag "${DATA_OUT}" > "${DATA_OUT}.sha512"
-fi
-if [ -r "${WARC_OUT}.warc" ] ; then
-	sha512sum --tag "${WARC_OUT}.warc" > "${WARC_OUT}.warc.sha512"
-fi
+if [ -r "${DATA_OUT}" ] ; then get-checksum "${DATA_OUT}" ; fi
+if [ -r "${WARC_OUT}.warc" ] ; then get-checksum "${WARC_OUT}.warc" ; fi
 
 	LWD="${PWD}"
 	cd "${SCREENCAP_DIR}"
-	node --unhandled-rejections=strict ./screencap.js --headless "${DATA_URL}" "${DATA_PNG}" "${DURATION}"
+	IDX=0
+	for URL in "${DATA_URLS[@]}" ; do
+		OUT_PNG="${DATA_PNG}"
+		if [ "${IDX}" -gt 0 ] ; then
+			wait "${SCREENCAP_PID}"
+			echo "... Screencap completed."
+
+			OUT_PNG=$( printf "${DATA_PNG_N}" "${IDX}" )
+		fi
+		node --unhandled-rejections=strict ./screencap.js --headless "${URL}" "${OUT_PNG}" "${DURATION}" & # this can take a while, do it in the background
+		SCREENCAP_PID="$!"
+
+		IDX=$((IDX + 1))
+	done
 	cd "${LWD}"
 
 # mirror the site
@@ -150,9 +164,9 @@ fi
 	fi
 	mv *.warc *.warc.gz ./warc
 
-	echo '$' wget  ${WG_INCLUDE} ${WG_EXCLUDE} ${WG_WARC} ${WG_ARGV[@]} "${DATA_URL}"
+	echo '$' wget  ${WG_INCLUDE} ${WG_EXCLUDE} ${WG_WARC} ${WG_ARGV[@]} "${DATA_URLS[@]}"
 
-	wget ${WG_INCLUDE} ${WG_EXCLUDE} ${WG_WARC} ${WG_ARGV[@]} "${DATA_URL}"
+	wget ${WG_INCLUDE} ${WG_EXCLUDE} ${WG_WARC} ${WG_ARGV[@]} "${DATA_URLS[@]}"
 
 	if [ ! -z "${WG_WARC}" ] ; then
 		if [ -r "${WARC_SITE_OUT}.warc" ] ; then
@@ -174,6 +188,10 @@ fi
 	echo '$' make-snapshot.pl "${MIRROR_DIR}/" "${SNAPSHOTDIR}" --timestamp="${DATESTAMP}"
 	make-snapshot.pl "${MIRROR_DIR}/" "${SNAPSHOTDIR}" --timestamp="${DATESTAMP}" --exclude=warc
 
+if [[ ! -z "${SCREENCAP_PID}" && -r "/proc/${SCREENCAP_PID}" ]] ; then
+	wait "${SCREENCAP_PID}"
+	echo "... Screencap completed."
+fi
 
 echo "Completed HTML front page dump of ${DATA_URL}: " $( date )
 
