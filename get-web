@@ -31,6 +31,7 @@ WG_ARGV[adjust-extension]="--adjust-extension"
 WG_ARGV[restrict-file-names]="--restrict-file-names=windows"
 WG_ARGV[timeout]="--timeout=20"
 WG_ARGV[tries]="--tries=10"
+WG_ARGV[reject_xmlrpc]="--reject=xmlrpc.php"
 
 while [ ! -z "$1" ] ; do
 	if [[ "$1" =~ ^--include-directories=(.*) ]] ; then
