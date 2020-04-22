@@ -96,12 +96,12 @@ if [ "${SYNC}" -ne 0 ] ; then
 	echo "... transmitting via rsync ..."
 	if [ "${DATAONLY}" -eq 0 ] ; then
 		if [ "${WEBONLY}" -eq 0 ] ; then
-			rsync --archive --itemize-changes --progress --exclude="mirror_*" --hard-links --exclude="${DATA_SERVER}" ./ ${DATA_SERVER}:${DATA_SLUG}/
+			rsync --archive --itemize-changes --progress --exclude="mirror_*" --hard-links --exclude="${DATA_SERVER}" --exclude="get-all.log" ./ ${DATA_SERVER}:${DATA_SLUG}/
 		else
-			rsync --archive --itemize-changes --progress --hard-links ./html/ ${DATA_SERVER}:${DATA_SLUG}/html/
+			rsync --archive --itemize-changes --progress --hard-links --exclude="get-all.log" ./html/ ${DATA_SERVER}:${DATA_SLUG}/html/
 		fi
 	else
-		rsync --archive --itemize-changes --progress --exclude="mirror_*" --hard-links ./data/ ${DATA_SERVER}:${DATA_SLUG}/data/
+		rsync --archive --itemize-changes --progress --exclude="mirror_*" --exclude="get-all.log" --hard-links ./data/ ${DATA_SERVER}:${DATA_SLUG}/data/
 
 	fi
 	exit
