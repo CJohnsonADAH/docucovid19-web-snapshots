@@ -197,7 +197,7 @@ while IFS="" read LINE; do
 	while [ ! -z "${WWW_SWITCH}" ] ; do
 		WWW_SWITCH=$( printf "%s" "$LINE" | cut -f "${FIELD}" )
 		if [ ! -z "${WWW_SWITCH}" ] ; then
-			WWW_SWITCHES=(${WWW_SWITCHES[@]} "${WWW_SWITCH}")
+			WWW_SWITCHES=("${WWW_SWITCHES[@]}" "${WWW_SWITCH}")
 		fi
 		FIELD=$((FIELD+1))
 	done
