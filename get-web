@@ -14,9 +14,12 @@ STEP="$1" ; shift
 STEPMOD="$1" ; shift
 DURATION="$1" ; shift
 
-
 WG_INCLUDE=""
 WG_EXCLUDE="--no-parent"
+
+## Process command-line arguments. This is a bit complicated, because
+## many arguments are going to be passed on to wget.
+
 declare -A WG_ARGV=()
 
 WG_ARGV[no-verbose]="--no-verbose"
