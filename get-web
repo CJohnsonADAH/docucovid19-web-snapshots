@@ -114,6 +114,60 @@ if [ ! -z "${SITE_TAG}" ] ; then
 fi
 HTMLPAGE_DATA="${HTMLPAGE_DATA}-"
 
+export DATA_DIR
+export SITE_TAG
+export DATESTAMP
+export SITESTEP
+export WG_INCLUDE
+export WG_EXCLUDE
+export WG_ARGV
+export DATA_URLS
+export WARC_SITE_OUT
+
+function do_webarc_mirror () {
+	WG_WARC=""
+	if [[ "${SITESTEP}" -eq 0 ]] ; then
+		WG_WARC="--warc-file=${WARC_SITE_OUT}"
+	fi
+
+	cd "${DATA_DIR}"
+
+	MIRROR_DIR="${DATA_DIR}/mirror_${SITE_TAG}"
+	if [ ! -d "${MIRROR_DIR}" ] ; then
+		mkdir --verbose "${MIRROR_DIR}"
+	fi
+	cd "${MIRROR_DIR}"
+
+	if [ ! -d "./warc" ] ; then
+		mkdir ./warc
+	fi
+	mv *.warc *.warc.* ./warc
+
+	echo '$' wget  ${WG_INCLUDE} ${WG_EXCLUDE} ${WG_WARC} ${WG_ARGV[@]} "${DATA_URLS[@]}"
+
+	wget ${WG_INCLUDE} ${WG_EXCLUDE} ${WG_WARC} ${WG_ARGV[@]} "${DATA_URLS[@]}"
+
+	if [ ! -z "${WG_WARC}" ] ; then
+		if [ -r "${WARC_SITE_OUT}.warc" ] ; then
+			get-checksum "${WARC_SITE_OUT}.warc"
+		fi
+	fi
+
+	#mkdir --verbose "${HTMLPAGE_DATA}${DATESTAMP}.mirror"
+	#cd "${HTMLPAGE_DATA}${DATESTAMP}.mirror"
+
+	SNAPSHOTDIR=${DATA_DIR}/html/snapshots/${SITE_TAG}
+	if [ ! -d "${SNAPSHOTDIR}" ] ; then
+		mkdir --parents "${SNAPSHOTDIR}"
+	fi
+
+	cd "${MIRROR_DIR}"
+	find -name '*.warc' -exec gzip \{\} \;
+
+	echo '$' make-snapshot.pl "${MIRROR_DIR}/" "${SNAPSHOTDIR}" --timestamp="${DATESTAMP}"
+	make-snapshot.pl "${MIRROR_DIR}/" "${SNAPSHOTDIR}" --timestamp="${DATESTAMP}" --exclude=warc
+} # /function do_webarc_mirror
+
 # fetch the basic HTML
 
 URL_OUT="${HTMLPAGE_DATA}${DATESTAMP}.url.txt"
@@ -156,46 +210,7 @@ if [ -r "${WARC_OUT}.warc" ] ; then get-checksum "${WARC_OUT}.warc" ; fi
 	cd "${LWD}"
 
 # mirror the site
-WG_WARC=""
-if [[ "${SITESTEP}" -eq 0 ]] ; then
-	WG_WARC="--warc-file=${WARC_SITE_OUT}"
-fi
-
-	cd "${DATA_DIR}"
-	MIRROR_DIR="${DATA_DIR}/mirror_${SITE_TAG}"
-	if [ ! -d "${MIRROR_DIR}" ] ; then
-		mkdir --verbose "${MIRROR_DIR}"
-	fi
-	cd "${MIRROR_DIR}"
-
-	if [ ! -d "./warc" ] ; then
-		mkdir ./warc
-	fi
-	mv *.warc *.warc.* ./warc
-
-	echo '$' wget  ${WG_INCLUDE} ${WG_EXCLUDE} ${WG_WARC} ${WG_ARGV[@]} "${DATA_URLS[@]}"
-
-	wget ${WG_INCLUDE} ${WG_EXCLUDE} ${WG_WARC} ${WG_ARGV[@]} "${DATA_URLS[@]}"
-
-	if [ ! -z "${WG_WARC}" ] ; then
-		if [ -r "${WARC_SITE_OUT}.warc" ] ; then
-			get-checksum "${WARC_SITE_OUT}.warc"
-		fi
-	fi
-
-	#mkdir --verbose "${HTMLPAGE_DATA}${DATESTAMP}.mirror"
-	#cd "${HTMLPAGE_DATA}${DATESTAMP}.mirror"
-
-	SNAPSHOTDIR=${DATA_DIR}/html/snapshots/${SITE_TAG}
-	if [ ! -d "${SNAPSHOTDIR}" ] ; then
-		mkdir --parents "${SNAPSHOTDIR}"
-	fi
-
-	cd "${MIRROR_DIR}"
-	find -name '*.warc' -exec gzip \{\} \;
-
-	echo '$' make-snapshot.pl "${MIRROR_DIR}/" "${SNAPSHOTDIR}" --timestamp="${DATESTAMP}"
-	make-snapshot.pl "${MIRROR_DIR}/" "${SNAPSHOTDIR}" --timestamp="${DATESTAMP}" --exclude=warc
+do_webarc_mirror
 
 if [[ ! -z "${SCREENCAP_PID}" && -r "/proc/${SCREENCAP_PID}" ]] ; then
 	wait "${SCREENCAP_PID}"
