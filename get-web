@@ -171,7 +171,7 @@ fi
 	if [ ! -d "./warc" ] ; then
 		mkdir ./warc
 	fi
-	mv *.warc *.warc.gz ./warc
+	mv *.warc *.warc.* ./warc
 
 	echo '$' wget  ${WG_INCLUDE} ${WG_EXCLUDE} ${WG_WARC} ${WG_ARGV[@]} "${DATA_URLS[@]}"
 
