@@ -1,0 +1,50 @@
+#!/bin/bash
+
+TEMPLATE="$1" ; shift
+URL="$1" ; shift
+
+if [[ "${TEMPLATE}" =~ %s ]] ; then
+
+	SITE_TYPE_TAGS="&generic"
+	if [[ "${TEMPLATE}" =~ ([^\&]*)[\&](.*)$ ]] ; then
+		TEMPLATE="${BASH_REMATCH[1]}"
+		SITE_TYPE_TAGS="${BASH_REMATCH[2]}&generic"
+	fi
+
+	if [[ "${URL}" =~ ^([^/:]+:)?(//([^/]*))(/.*)?$ ]] ; then
+		SCHEME="${BASH_REMATCH[1]}"
+		AUTHORITY="${BASH_REMATCH[3]}"
+		DOMAIN="${AUTHORITY}"
+		if [[ "${AUTHORITY}" =~ ^(([^.]+)[.])(((([^.]+)[.])+)([^.]+))$ ]] ; then
+			SUBDOMAIN="${BASH_REMATCH[2]}"
+			DOMAIN="${BASH_REMATCH[3]}"
+			TLD="${BASH_REMATCH[7]}"
+		fi
+
+		URL_PATH="${BASH_REMATCH[4]}"
+	fi
+
+	declare -A UTILITY_DOMAINS
+	UTILITY_DOMAINS[generic]='jquery.com,googleapis.com,gstatic.com,typekit.net,fontawesome.com,jsdelivr.net,syndication.twitter.com,platform.twitter.com,twimg.com'
+	UTILITY_DOMAINS[wix]='wix.com,wixstatic.com,parastorage.com,wixpress.com,%s'
+	UTILITY_DOMAINS[squarespace]='squarespace.com,squarespace-cdn.com,%s'
+	UTILITY_DOMAINS[schoolwires]='schoolwires.com,%s'
+	UTILITY_DOMAINS[wordpress]='wp.com,wordpress.com,%s'
+	UTILITY_DOMAINS[civicplus]='civicplus.com,%s'
+	UTILITY_DOMAINS[subdomain]="${DOMAIN},%s"
+
+	IFS='&' read -r -a SITE_TYPES <<< "${SITE_TYPE_TAGS}"
+	DOMAINS="${AUTHORITY},%s"
+	for SITE_TYPE in "${SITE_TYPES[@]}" ; do
+		if [ ! -z "${SITE_TYPE}" ] ; then
+			NEXT_TEMPLATE="${UTILITY_DOMAINS[$SITE_TYPE]}"
+			DOMAINS=$( printf "${DOMAINS}" "${NEXT_TEMPLATE}" )
+		fi
+	done
+	printf "%s${TEMPLATE}" "" "${DOMAINS}"
+
+else
+
+	printf "%s" "${TEMPLATE}"
+fi
+

@@ -127,6 +127,11 @@ WARC_SITE_OUT="${SITE_TAG}-${DATESTAMP}"
 IFS="|" read -r -a DATA_URLS <<< "${DATA_URL}"
 DATA_URL="${DATA_URLS[0]}"
 echo "${DATA_URL}" > "${URL_OUT}" 
+
+if [[ ! -z "${WG_ARGV[domains]}" ]] ; then
+	WG_ARGV[domains]=$( get-wget-domains-switch "${WG_ARGV[domains]}" "${DATA_URL}" )
+fi
+
 wget ${WG_ARGV[no-verbose]} ${WG_ARGV[no-check-certificate]} --output-document="${DATA_OUT}" --warc-file="${WARC_OUT}" "${DATA_URL}"
 
 if [ -r "${DATA_OUT}" ] ; then get-checksum "${DATA_OUT}" ; fi
