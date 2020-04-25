@@ -3,6 +3,7 @@
 export SCRIPT_PATH=$( readlink -f "$0" )
 export SCRIPT_DIR=$( dirname "${SCRIPT_PATH}" )
 export PATH="${SCRIPT_DIR}:${PATH}"
+export NODE_NAME=$( uname --node )
 
 export DATA_SERVER="alacovdat.dev.radgeek.net"
 export DATA_SLUG="covid-data"
@@ -172,6 +173,12 @@ if [[ "${DATAONLY}" -eq 0 ]] ; then
 wget --no-verbose --mirror "http://${DATA_SERVER}/sources.tsv.txt"
 while IFS="" read LINE; do
 	RE="--regexp-extended"
+
+	if [[ "${LINE}" =~ ([#][@]([A-Za-z0-9]+)) ]] ; then
+		FOR_NODE="${BASH_REMATCH[2]}"
+	else
+		FOR_NODE="${NODE_NAME}"
+	fi
 
 	# remove comments and trim
 	LINE=$(
