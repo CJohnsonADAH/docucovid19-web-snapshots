@@ -1,4 +1,8 @@
-== get-all ==
+Documenting Covid-19 Web Snapshots Script Suite
+===============================================
+
+get-all
+-------
 
 The `get-all` script orchestrates the process of making scheduled or
 on-demand archiving of websites or data tables accessible through the web.
