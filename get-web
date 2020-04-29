@@ -194,9 +194,6 @@ function do_webarc_mirror () {
 		fi
 	fi
 
-	#mkdir --verbose "${HTMLPAGE_DATA}${DATESTAMP}.mirror"
-	#cd "${HTMLPAGE_DATA}${DATESTAMP}.mirror"
-
 	SNAPSHOTDIR=${DATA_DIR}/html/snapshots/${SITE_TAG}
 	if [ ! -d "${SNAPSHOTDIR}" ] ; then
 		mkdir --parents "${SNAPSHOTDIR}"
