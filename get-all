@@ -3,7 +3,7 @@
 # get-all: Script to orchestrate scheduled or on-demand web archiving and
 # data-table archiving.
 #
-# Usage: get-all [--sync] [--data] [--web] [slug...]
+# Usage: get-all [--sync] [--data] [--web] [SLUG...]
 #
 # @version 2020.0429
 

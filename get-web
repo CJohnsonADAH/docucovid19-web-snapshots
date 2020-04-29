@@ -190,6 +190,11 @@ export DURATION
 export SCREENCAP_DIR
 export SCREENCAP_PID
 
+# do_html_snapshot: capture the HTML source and a WARC archival transcript
+# of a web page. Compute and store cryptographic hash checksums for the
+# HTML payload and for the WARC transcript.
+#
+# Usage: do_html_snapshot
 function do_html_snapshot () {
 	wget ${WG_ARGV[no-verbose]} ${WG_ARGV[no-check-certificate]} --output-document="${DATA_OUT}" --warc-file="${WARC_OUT}" "${DATA_URL}"
 
@@ -197,6 +202,17 @@ function do_html_snapshot () {
 	if [ -r "${WARC_OUT}.warc" ] ; then get-checksum "${WARC_OUT}.warc" ; fi
 }
 
+# do_website_screenshot: capture a screenshot image of the web page
+# using a Node.js/Puppeteer script. If there are multiple URLs, then
+# do screenshots of one after another.
+#
+# Usage: do_website_screenshot
+#
+# Return: ${SCREENCAP_PID} keeps the PID of the final screenshot process
+#
+# Headless browser instances are run in the background, so you should
+# wait ${SCREENCAP_PID} before proceeding to do something else that might
+# launch another screenshot or another headless browser instance.
 function do_website_screenshot () {
 	LWD="${PWD}"
 	cd "${SCREENCAP_DIR}"
@@ -217,6 +233,18 @@ function do_website_screenshot () {
 	cd "${LWD}"
 }
 
+# do_webarc_mirror: capture an extended mirror of the hypertext resource
+# hopefully including assets required to display it (images, JS, CSS)
+# and potentially including pages or documents linked to in the HTML
+# source (for example, other HTML pages, PDFs, etc.).
+#
+# On the right points of the cycle, capture the HTTP session in an
+# archival WARC file, compute a SHA-512 checksum and gzip the WARC.
+# Finally, make a hardlinked snapshot of the mirrored hypertext.
+#
+# Usage: do_webarc_mirror
+#
+# This function can be run in the background [do_webarc_mirror &].
 function do_webarc_mirror () {
 	WG_WARC=""
 	if [[ "${SITESTEP}" -eq 0 ]] ; then
