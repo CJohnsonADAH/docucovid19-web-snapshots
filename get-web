@@ -251,7 +251,7 @@ if [ -r "${WARC_OUT}.warc" ] ; then get-checksum "${WARC_OUT}.warc" ; fi
 	cd "${LWD}"
 
 # mirror the site
-do_webarc_mirror
+do_webarc_mirror &
 
 if [[ ! -z "${SCREENCAP_PID}" && -r "/proc/${SCREENCAP_PID}" ]] ; then
 	wait "${SCREENCAP_PID}"
