@@ -19,7 +19,7 @@ function do_usage_error () {
 }
 
 ## Process command-line arguments. This is a bit complicated, because
-## many arguments are going to be passed on to wget.
+## many arguments are passed along as-is to wget.
 
 declare -a GW_ARGV=("$0")
 declare -a GW_OBJS=()
@@ -152,6 +152,13 @@ if [ -z "${DATA_DIR}" ] ; then
 fi
 if [ -z "${DATESTAMP}" ] ; then
 	DATESTAMP=$( TZ="UTC" date +"%Y%m%d%H%M%SZ" )
+fi
+
+
+if [[ "${OFFCYCLE}" -gt 0 ]] ; then
+	TS_TODAY=$( date )
+	printf "\n[...] Deferring HTML front page dump of %s (%d-day cycle): %s [...]\n" "${DATA_URL}" "${RATIO}" "${TS_TODAY}"
+	exit
 fi
 
 HTMLPAGE_DATA="${DATA_DIR}/html"
