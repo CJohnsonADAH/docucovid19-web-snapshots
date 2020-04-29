@@ -1,4 +1,11 @@
 #!/bin/bash
+#
+# get-web: script to orchestrate the download of contents, metadata, and
+# screenshot of a website that you want to archive. This is typically
+# invoked by the `get-all` script, which handles questions of scheduling
+# and shared parameters.
+#
+# @version 2020.0429
 
 SCRIPT_PATH=$( readlink -f "$0" )
 SCRIPT_DIR=$( dirname "${SCRIPT_PATH}" )
@@ -6,21 +13,55 @@ SCREENCAP_DIR="${SCRIPT_DIR}/screencaps"
 PATH="${SCRIPT_DIR}:${SCREENCAP_DIR}:${PATH}"
 SCREENCAP_PID=""
 
-DATA_URL="$1" ; shift
-SITE_TAG="$1" ; shift
-DATESTAMP="$1" ; shift
-DATA_DIR="$1" ; shift
-STEP="$1" ; shift
-STEPMOD="$1" ; shift
-DURATION="$1" ; shift
-
-WG_INCLUDE=""
-WG_EXCLUDE="--no-parent"
-
 ## Process command-line arguments. This is a bit complicated, because
 ## many arguments are going to be passed on to wget.
 
+declare -a GW_ARGV=("$0")
+declare -a GW_OBJS=()
+declare -A GW_SWITCHES=()
+declare -A GW_PARAMS=()
+
+while [ $# -gt 0 ] ; do
+	GW_ARGV=("${GW_ARGV[@]}" "$1")
+	if [[ "$1" =~ ^--([^=]+)(=(.*))?$ ]] ; then
+		KEY="${BASH_REMATCH[1]}"
+		GW_SWITCHES["${KEY}"]="${BASH_REMATCH[0]}"
+		GW_PARAMS["${KEY}"]="${KEY}"
+		if [ ! -z "${BASH_REMATCH[2]}" ] ; then
+			GW_PARAMS["${KEY}"]="${BASH_REMATCH[3]}"
+		fi
+	else
+		GW_OBJS=("${GW_OBJS[@]}" "$1")
+	fi
+	shift
+done
+
+if [ "${GW_PARAMS[test]}" = "argv" ] ; then
+	declare -p GW_ARGV
+	declare -p GW_OBJS
+	declare -p GW_SWITCHES
+	declare -p GW_PARAMS
+	exit
+fi
+
+DATA_URL="${GW_OBJS[0]}"
+SITE_TAG="${GW_OBJS[1]}"
+DATESTAMP="${GW_OBJS[2]}"
+DATA_DIR="${GW_OBJS[3]}"
+STEP="${GW_OBJS[4]}"
+STEPMOD="${GW_OBJS[5]}"
+DURATION="${GW_OBJS[6]}"
+
+if [[ ! -z "${GW_PARAMS[first]}" ]] ; then
+	DATESTAMP=""
+	STEP=0
+	STEPMOD=4
+fi
+
 declare -A WG_ARGV=()
+
+WG_INCLUDE=""
+WG_EXCLUDE="--no-parent"
 
 WG_ARGV[no-verbose]="--no-verbose"
 WG_ARGV[no-check-certificate]="" # off by default; individual sites can turn it on
@@ -36,9 +77,10 @@ WG_ARGV[timeout]="--timeout=20"
 WG_ARGV[tries]="--tries=10"
 WG_ARGV[reject_xmlrpc]="--reject=xmlrpc.php"
 
-while [ ! -z "$1" ] ; do
-	if [[ "$1" =~ ^--include-directories=(.*) ]] ; then
-		WG_INCLUDE="$1"
+for KEY in "${!GW_SWITCHES[@]}" ; do
+	SWITCH="${GW_SWITCHES[${KEY}]}"
+	if [[ "${SWITCH}" =~ ^--include-directories=(.*) ]] ; then
+		WG_INCLUDE="${SWITCH}"
 		if [ "${BASH_REMATCH[1]}" = "-" ] ; then
 			WG_INCLUDE=""
 			WG_EXCLUDE=""
@@ -48,17 +90,12 @@ while [ ! -z "$1" ] ; do
 			WG_INCLUDE=""
 			WG_EXCLUDE=""
 		fi
-	elif [[ "$1" =~ ^--([^=]+)(=.+)? ]] ; then
-		WG_ARGV["${BASH_REMATCH[1]}"]="$1"
+	elif [[ "${KEY}" =~ ^(first)$ ]] ; then
+		noop # this is an argument to get-web, not wget
+	else
+		WG_ARGV["${KEY}"]="${SWITCH}"
 	fi
-	shift
 done
-
-if [[ "${DATESTAMP}" == "--first" ]] ; then
-	DATESTAMP=""
-	STEP=0
-	STEPMOD=4
-fi
 
 if [ -z "${STEP}" ] ; then
 	STEP=0
@@ -76,7 +113,7 @@ if [ "${RATIO}" -eq 0 ] ; then
 fi
 OFFCYCLE=$(( SITESTEP % RATIO ))
 
-if [[ "${DATA_URL}" == "--test" ]] ; then
+if [[ "${GW_PARAMS[test]}" =~ (^|,)params(,|$) ]] ; then
 	printf "DATA_URL: %s\n" "${DATA_URL}"
 	printf "SITE_TAG: %s\n" "${SITE_TAG}"
 	printf "DATESTAMP: %s\n" "${DATESTAMP}"
@@ -88,6 +125,10 @@ if [[ "${DATA_URL}" == "--test" ]] ; then
 	printf "SITESTEP: %d\n" "${SITESTEP}"
 	printf "RATIO: %d\n" "${RATIO}"
 	printf "OFFCYCLE: %d\n" "${OFFCYCLE}"
+	printf "\n"
+	printf "WG_INCLUDE=%s\n" "${WG_INCLUDE}"
+	printf "WG_EXCLUDE=%s\n" "${WG_EXCLUDE}"
+	declare -p WG_ARGV
 	exit
 fi
 

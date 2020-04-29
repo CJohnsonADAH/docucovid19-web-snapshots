@@ -1,24 +1,46 @@
 #!/bin/bash
+#
+# get-all-polling-interval: utility script to make a best guess at the
+# interval for polling web and data sources
+#
+# Usage: get-all-polling-interval 
+#
+# Output: integer, number of hours betwixt polls
+# based on crontab or a default value
 
 POLLING_INTERVAL=6 # Default to 6 hours
 
+# Look for polling job in crontab, based on get-all script
+# substitute a single tab for every span of whitespace, to help cut
 CRONTAB=$( \
 	crontab -l \
 	| grep --perl-regexp "/covid-scripts/get-all" \
 	| sed --regexp-extended 's/\s+/\t/g' \
 )
 
+# $CRONTAB should have a line something like:
+# 0	*/6	*	*	*	${HOME}/covid-scripts/get-all 2>&1 | tee --append ${HOME}/covid-data/get-all.log
+# the second field (here, */6) represents the hour to trigger the script
+
 CRON_HOUR=$( printf "%s" "${CRONTAB}" | cut --field=2 )
 if [[ ! -z "${CRON_HOUR}" ]] ; then
 	CRON_INTERVAL=0
+
+	# if hour is a fixed numeric value, it triggers once a day
 	if [[ "${CRON_HOUR}" =~ ^[0-9]+$ ]] ; then
 		CRON_INTERVAL=24
+
+	# if hour is an open wildcard, it triggers once an hour
 	elif [[ "${CRON_HOUR}" =~ ^[*]$ ]] ; then
 		CRON_INTERVAL=1
+
+	# if hour is a modulo N wildcard, it triggers every N hours
 	elif [[ "${CRON_HOUR}" =~ ^[*]/[0-9]+$ ]] ; then
 		CRON_INTERVAL=$( printf "%s" "${CRON_HOUR}" | cut --delimiter="/" --field=2 )
+
 	fi
 
+	# if we got something, we print it; if not, stick with default
 	if [[ "${CRON_INTERVAL}" -gt 0 ]] ; then
 		POLLING_INTERVAL="${CRON_INTERVAL}"
 	fi
