@@ -8,10 +8,15 @@
 # @version 2020.0429
 
 SCRIPT_PATH=$( readlink -f "$0" )
+SCRIPT_NAME=$( basename "${SCRIPT_PATH}" )
 SCRIPT_DIR=$( dirname "${SCRIPT_PATH}" )
 SCREENCAP_DIR="${SCRIPT_DIR}/screencaps"
 PATH="${SCRIPT_DIR}:${SCREENCAP_DIR}:${PATH}"
 SCREENCAP_PID=""
+
+function do_usage_error () {
+	echo "Usage: ${SCRIPT_NAME} URL SITE_TAG DATETIME DATA_DIR STEP STEPCYCLE DURATION [--WGET-PARAMETER=VALUE...]" 1>&2
+}
 
 ## Process command-line arguments. This is a bit complicated, because
 ## many arguments are going to be passed on to wget.
@@ -132,12 +137,16 @@ if [[ "${GW_PARAMS[test]}" =~ (^|,)params(,|$) ]] ; then
 	exit
 fi
 
-if [[ "${OFFCYCLE}" -gt 0 ]] ; then
-	TS_TODAY=$( date )
-	printf "\n[...] Deferring HTML front page dump of %s (%d-day cycle): %s [...]\n" "${DATA_URL}" "${RATIO}" "${TS_TODAY}"
-	exit
+if [[ -z "${DATA_URL}" ]] ; then
+	echo "[${SCRIPT_NAME}] No URL provided." 1>&2
+	do_usage_error
+	exit 255
 fi
-
+if [[ -z "${SITE_TAG}" ]] ; then
+	echo "[${SCRIPT_NAME}] No site name provided." 1>&2
+	do_usage_error
+	exit 255
+fi
 if [ -z "${DATA_DIR}" ] ; then
 	DATA_DIR="${HOME}/covid-data"
 fi
